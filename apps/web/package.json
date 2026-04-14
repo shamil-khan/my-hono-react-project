@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "deploy": "pnpm build && wrangler pages deploy dist --project-name my-hono-react-web",
+    "deploy": "pnpm build && wrangler pages deploy dist",
     "lint": "eslint .",
     "preview": "vite preview"
   },
