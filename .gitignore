@@ -2,3 +2,24 @@ node_modules/
 dist/
 build/
 .env
+
+# Terraform local state and history
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+
+# Terraform configuration overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform crash logs
+crash.log
+crash.log.*
+
+# Terraform CLI configuration
+.terraformrc
+terraform.rc
