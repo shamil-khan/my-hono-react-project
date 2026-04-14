@@ -35,18 +35,17 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
-      - name: Import Existing Project (If needed)
+      - name: Discover and Import Existing Resources
         run: |
-          # Try to import. If it's already in state or doesn't exist, it will just continue.
-          terraform import cloudflare_pages_project.frontend ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-react-web || true
+          # 1. Check and Import Pages Frontend
+          terraform import cloudflare_pages_project.frontend ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-react-web || echo "Pages already in state or not found"
+          
+          # 2. Check and Import Hono API Worker
+          terraform import cloudflare_workers_script.api ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-api || echo "Worker already in state or not found"
         working-directory: ./terraform
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: ./terraform
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'

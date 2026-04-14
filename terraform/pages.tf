@@ -8,4 +8,13 @@ resource "cloudflare_pages_project" "frontend" {
     destination_dir = "dist"
     root_dir        = "apps/web"
   }
+  
+  deployment_config {
+    production {
+      environment_variables = {
+        # Replace with your actual workers.dev URL
+        VITE_API_URL = "https://my-hono-api.shamil-khan.workers.dev"
+      }
+    }
+  }
 }
