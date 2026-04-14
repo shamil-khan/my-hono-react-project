@@ -35,6 +35,15 @@ jobs:
         run: terraform init
         working-directory: ./terraform
 
+      - name: Import Existing Project (If needed)
+        run: |
+          # Try to import. If it's already in state or doesn't exist, it will just continue.
+          terraform import cloudflare_pages_project.frontend ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-react-web || true
+        working-directory: ./terraform
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Terraform Plan
         run: terraform plan
         working-directory: ./terraform
