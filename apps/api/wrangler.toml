@@ -19,4 +19,4 @@ persist = true
 head_sampling_rate = 1
 
 [vars]
-ALLOWED_ORIGIN = "https://my-hono-react-web.pages.dev/"
+ALLOWED_ORIGIN = "https://my-hono-react-web.pages.dev"
