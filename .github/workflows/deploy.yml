@@ -1,70 +1,53 @@
-name: Deploy Infrastructure
+name: Deploy Monorepo
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
+  # JOB 1: Ensure Infra is ready (Optional: only run if terraform/ changes)
   terraform:
     name: "Terraform"
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      # THIS STEP IS CRITICAL: It creates the file Terraform is looking for
-      - name: Build API and Web
-        run: |
-          cd apps/api && pnpm run build
-          cd ../web && pnpm run build
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}  
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
-
-      - name: Discover and Import Existing Resources
-        run: |
-          terraform import cloudflare_pages_project.frontend ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-react-web || echo "Pages already in state or not found"
-          terraform import cloudflare_workers_script.api ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-api || echo "Worker already in state or not found"
-        working-directory: ./terraform
-
+      - uses: actions/checkout@v4
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
         working-directory: ./terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: Deploy API to Cloudflare Workers
-        run: cd apps/api && pnpm run deploy --name my-hono-api
+  # JOB 2: Build and Deploy (Scalable approach)
+  deploy:
+    needs: terraform
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            path: ./apps/api
+            command: pnpm run deploy # Wrangler deploy
+          - name: web
+            path: ./apps/web
+            command: pnpm run deploy # Wrangler pages deploy
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: 'pnpm' }
+        
+      - name: Install & Build
+        run: pnpm install
+        
+      - name: Deploy ${{ matrix.name }}
+        working-directory: ${{ matrix.path }}
+        run: ${{ matrix.command }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}        
-
-      - name: Deploy Frontend to Cloudflare Pages
-        run: npx wrangler pages deploy apps/web/dist --project-name my-hono-react-web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}        
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Inject build-time vars here
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
