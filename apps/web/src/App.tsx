@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <h1>Frontend + Backend</h1>
+      <h1>Hello: Frontend + Backend</h1>
       <p>Message from Hono: <strong>{message}</strong></p>
     </div>
   )
