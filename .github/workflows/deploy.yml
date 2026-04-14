@@ -11,6 +11,9 @@ jobs:
     env:
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +23,9 @@ jobs:
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
@@ -31,7 +37,7 @@ jobs:
           cd ../web && pnpm run build
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
         run: terraform init
@@ -39,23 +45,14 @@ jobs:
 
       - name: Discover and Import Existing Resources
         run: |
-          # 1. Check and Import Pages Frontend
           terraform import cloudflare_pages_project.frontend ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-react-web || echo "Pages already in state or not found"
-          
-          # 2. Check and Import Hono API Worker
           terraform import cloudflare_workers_script.api ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/my-hono-api || echo "Worker already in state or not found"
         working-directory: ./terraform
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
         working-directory: ./terraform
-
-      - name: Build Web Frontend
-        run: cd apps/web && pnpm run build
 
       - name: Deploy API to Cloudflare Workers
         run: cd apps/api && pnpm run deploy --name my-hono-api
