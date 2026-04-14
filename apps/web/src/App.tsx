@@ -15,7 +15,7 @@ function App() {
 
   return (
     <div>
-      <h1>Hello: Frontend + Backend + Market</h1>
+      <h1>Hello: Frontend + Backend + Shop</h1>
       <p>Message from Hono-Api: <strong>{message}</strong></p>
     </div>
   )
