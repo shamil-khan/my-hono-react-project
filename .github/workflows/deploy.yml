@@ -31,14 +31,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # THIS STEP IS CRITICAL: It creates the file Terraform is looking for
-      - name: Build API and Web
-        run: |
-          cd apps/api && pnpm run build
-          cd ../web && pnpm run build
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}  
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
 
@@ -68,3 +60,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}        
+          VITE_API_URL: ${{ vars.VITE_API_URL }}  
