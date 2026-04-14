@@ -5,49 +5,72 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Prevents multiple deployments from running at the same time
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # JOB 1: Ensure Infra is ready (Optional: only run if terraform/ changes)
   terraform:
     name: "Terraform"
     runs-on: ubuntu-latest
+    env:
+      # Ensure Terraform has all required CF credentials
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
-      - name: Terraform Apply
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+          terraform_wrapper: false
+
+      - name: Terraform Init & Apply
         working-directory: ./terraform
         run: |
           terraform init
           terraform apply -auto-approve
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-  # JOB 2: Build and Deploy (Scalable approach)
+  # JOB 2: Parallel Build and Deploy
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: true # If the API build fails, don't bother trying the UI
       matrix:
         include:
-          - name: api
+          - name: backend
             path: ./apps/api
-            command: pnpm run deploy # Wrangler deploy
-          - name: web
+            deploy_cmd: pnpm run deploy
+          - name: frontend
             path: ./apps/web
-            command: pnpm run deploy # Wrangler pages deploy
-    
+            deploy_cmd: pnpm run deploy
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 24, cache: 'pnpm' }
-        
-      - name: Install & Build
+        with:
+          version: 10 # Specify your pnpm version
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
         run: pnpm install
-        
+
       - name: Deploy ${{ matrix.name }}
         working-directory: ${{ matrix.path }}
-        run: ${{ matrix.command }}
+        run: ${{ matrix.deploy_cmd }}
         env:
+          # Credentials for Wrangler
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Inject build-time vars here
+          # Build-time injection for Vite (Frontend)
           VITE_API_URL: ${{ vars.VITE_API_URL }}
