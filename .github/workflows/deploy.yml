@@ -2,7 +2,7 @@ name: Deploy Infrastructure
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   terraform:
@@ -15,9 +15,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: pnpm install        
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # THIS STEP IS CRITICAL: It creates the file Terraform is looking for
       - name: Build API
         run: cd apps/api && pnpm run build
 
@@ -36,6 +48,3 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
         working-directory: ./terraform
-
-
-      # Note: We'll add 'apply' once we verify secrets in the next step
