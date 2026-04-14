@@ -36,6 +36,8 @@ jobs:
         run: |
           cd apps/api && pnpm run build
           cd ../web && pnpm run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}  
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
