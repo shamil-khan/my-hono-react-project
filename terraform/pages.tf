@@ -9,7 +9,7 @@ resource "cloudflare_pages_project" "frontend" {
     root_dir        = "apps/web"
   }
   
-  deployment_config {
+  deployment_configs {
     production {
       environment_variables = {
         # Replace with your actual workers.dev URL
