@@ -20,6 +20,17 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       VITE_API_URL: ${{ vars.VITE_API_URL }}  
 
+    strategy:
+      fail-fast: true # Your services are interdependent, so if one fails, we should stop the others
+      matrix:
+        include:
+          - name: backend
+            path: ./apps/api
+            deploy_cmd: pnpm run deploy
+          - name: frontend
+            path: ./apps/web
+            deploy_cmd: pnpm run deploy
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,21 +71,7 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
-  deploy:
-    needs: terraform
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true # If the API build fails, don't bother trying the UI
-      matrix:
-        include:
-          - name: backend
-            path: ./apps/api
-            deploy_cmd: pnpm run deploy
-          - name: frontend
-            path: ./apps/web
-            deploy_cmd: pnpm run deploy
-
-    steps:
       - name: Deploy ${{ matrix.name }}
         working-directory: ${{ matrix.path }}
         run: ${{ matrix.deploy_cmd }}
+        
