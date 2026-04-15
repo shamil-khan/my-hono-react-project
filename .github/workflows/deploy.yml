@@ -79,7 +79,7 @@ jobs:
           path: apps
 
       - name: Deploy API
-        run: npx wrangler deploy apps/api/dist/index.js --name my-hono-api
+        run: cd apps/api && npx wrangler deploy dist/index.js
         # Points directly to pre-built file → no rebuild ✅
 
       - name: Deploy Web
