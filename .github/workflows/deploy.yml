@@ -79,9 +79,9 @@ jobs:
           path: apps
 
       - name: Deploy API
-        run: cd apps/api && npx wrangler deploy dist/index.js
+        run: pnpm --filter api run deploy --name my-hono-api
         # Points directly to pre-built file → no rebuild ✅
 
       - name: Deploy Web
-        run: npx wrangler pages deploy apps/web/dist --project-name my-hono-react-web
+        run: pnpm --filter web run deploy --project-name my-hono-web
         # Deploys pre-built dist/ folder → no rebuild ✅
