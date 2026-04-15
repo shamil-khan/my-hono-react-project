@@ -2,7 +2,6 @@
 terraform {
   cloud {
     organization = "shamil-khan"
-
     workspaces {
       name = "Soda"
     }
@@ -14,4 +13,8 @@ terraform {
       version = "~> 4.0"
     }
   }
+}
+
+provider "cloudflare" {
+  # reads CLOUDFLARE_API_TOKEN from environment automatically
 }
