@@ -15,6 +15,6 @@ app.use('/*', async (c, next) => {
   return corsMiddleware(c, next)
 })
 
-app.get('/', (c) => c.text(`Hi Lion! ${new Date().toLocaleString()}`))
+app.get('/', (c) => c.text(`Hi Tiger! ${new Date().toLocaleString()}`))
 
 export default app
