@@ -83,5 +83,5 @@ jobs:
         # Points directly to pre-built file → no rebuild ✅
 
       - name: Deploy Web
-        run: cd apps/web && npx wrangler pages deploy dist --project-name my-hono-web
+        run: cd apps/web && npx wrangler pages deploy dist --project-name my-hono-react-web
         # Deploys pre-built dist/ folder → no rebuild ✅
