@@ -29,7 +29,7 @@ jobs:
             deploy_cmd: pnpm run deploy
           - name: frontend
             path: ./apps/web
-            deploy_cmd: pnpm run deploy
+            deploy_cmd: pnpm run deploy --project-name my-hono-react-web
 
     steps:
       - name: Checkout
